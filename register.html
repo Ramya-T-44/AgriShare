@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - AgriShare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="auth-body">
+
+    <div class="auth-card">
+        <div class="auth-card-header">
+            <span class="auth-emoji">👨‍🌾</span>
+            <h2 class="auth-title">Join AgriShare</h2>
+            <p class="auth-subtitle">Create your free account to start sharing equipment.</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="/register" method="POST">
+            <div class="form-group mb-15">
+                <label>Full Name</label>
+                <input type="text" name="full_name" required placeholder="e.g. Ramesh Kumar">
+            </div>
+            <div class="form-group mb-15">
+                <label>Email Address</label>
+                <input type="email" name="email" required placeholder="name@example.com">
+            </div>
+            <div class="form-group mb-15">
+                <label>Password</label>
+                <input type="password" name="password" required placeholder="Create password...">
+            </div>
+            <div class="form-group mb-15">
+                <label>Phone Number</label>
+                <input type="text" name="phone" required placeholder="Mobile number...">
+            </div>
+            <div class="form-group mb-20">
+                <label>Village / City Name</label>
+                <input type="text" name="village" required placeholder="e.g. Rampur">
+            </div>
+            <button type="submit" class="btn btn-green w-100">Create Account →</button>
+        </form>
+
+        <p class="auth-footer">
+            Already registered? <a href="/login">Login here</a>
+        </p>
+    </div>
+
+</body>
+</html>
+

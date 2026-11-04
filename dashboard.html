@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriShare - Farm Equipment Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="brand-logo">
+                <span class="logo-icon">🚜</span> AgriShare
+                <span class="tagline">Farm Equipment Hub</span>
+</a>
+
+<div class="user-menu">
+                <div class="dropdown">
+                    <button type="button" class="dropdown-toggle" id="userDropdownBtn">
+                        <span class="welcome-text">👤 Welcome, <strong>{{ user_name }}</strong></span>
+                        <span class="dropdown-caret">▾</span>
+                    </button>
+                    <div class="dropdown-menu" id="userDropdownMenu">
+                        <a href="/add-equipment" class="dropdown-item">➕ Add Equipment</a>
+                        <a href="/change-password" class="dropdown-item">🔒 Change Password</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="/logout" class="dropdown-item dropdown-item-danger">🚪 Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+        <div class="hero-content">
+            <h1>🌾 Share. Rent. <span class="highlight">Grow Together.</span></h1>
+            <p>Rent modern farm machinery from your neighbors or list your own equipment to earn extra income.</p>
+        </div>
+    </div>
+
+    <div class="main-container">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">
+                <span class="alert-icon">✔</span> {{ message }}
+                <span class="alert-close" onclick="this.parentElement.remove()">&times;</span>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- STATS COUNTER WIDGETS -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div>
+                    <span class="stat-label">Available Machines</span>
+                    <h2 class="stat-value text-green">{{ stats.total }}</h2>
+                </div>
+                <div class="stat-icon">⚙️</div>
+            </div>
+            <div class="stat-card border-blue">
+                <div>
+                    <span class="stat-label">Active Rentals</span>
+                    <h2 class="stat-value text-blue">{{ stats.active }}</h2>
+                </div>
+                <div class="stat-icon">📅</div>
+            </div>
+        </div>
+
+        <!-- SEARCH & FILTER FORM -->
+        <div class="filter-card">
+            <div class="filter-title">🔍 Find Equipment Near You</div>
+            <form action="/" method="GET" class="filter-form">
+                <div class="form-group">
+                    <label>Filter by Village</label>
+                    <input type="text" name="village" value="{{ selected_village }}" placeholder="Enter Village Name...">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category">
+                        <option value="">All Categories</option>
+                        <option value="Tractor" {% if selected_category == 'Tractor' %}selected{% endif %}>🚜 Tractor</option>
+                        <option value="Harvester" {% if selected_category == 'Harvester' %}selected{% endif %}>🌾 Harvester</option>
+                        <option value="Irrigation Pump" {% if selected_category == 'Irrigation Pump' %}selected{% endif %}>💧 Irrigation Pump</option>
+                    </select>
+                </div>
+                <div class="form-group align-end">
+                    <button type="submit" class="btn btn-green">🔍 Filter Results</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- EQUIPMENT LISTINGS GRID -->
+        <div class="section-header">
+            <h3 class="section-title">🌾 Nearby Equipment</h3>
+            <span class="section-count">{{ equipment|length }} items</span>
+        </div>
+        <div class="equipment-grid">
+            {% if equipment %}
+                {% for item in equipment %}
+                <div class="equipment-card">
+                    <div class="card-top">
+                        <span class="badge">{{ item.Category }}</span>
+                        <span class="availability">● Available</span>
+                    </div>
+                    <div class="equip-icon">🚜</div>
+                    <h4 class="equipment-title">{{ item.Title }}</h4>
+                    <p class="location">📍 {{ item.VillageName }}</p>
+                    <p class="owner">👤 Owner: {{ item.FullName }}</p>
+                    <div class="price-row">
+                        <span class="price">₹{{ item.HourlyRate }} <small>/ hr</small></span>
+                        {% if item.DailyRate %}
+                        <span class="price daily-price">₹{{ item.DailyRate }} <small>/ day</small></span>
+                        {% endif %}
+                    </div>
+                    <button class="btn btn-outline-green btn-book"
+                            data-id="{{ item.EquipmentID }}"
+                            data-title="{{ item.Title }}"
+                            data-rate="{{ item.HourlyRate }}">
+                        Book Equipment
+                    </button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-data-alert">
+                    ⚠️ No equipment found matching your search filters.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- REQUESTS FOR MY EQUIPMENT (AS OWNER) -->
+        <div class="section-header">
+            <h3 class="section-title">📥 Requests for My Equipment</h3>
+            <span class="section-count">{{ owner_requests|length }} requests</span>
+        </div>
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Equipment</th>
+                        <th>Renter</th>
+                        <th>Dates</th>
+                        <th>Cost</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in owner_requests %}
+                    <tr>
+                        <td class="font-bold">{{ req[1] }}</td>
+                        <td>{{ req[2] }} <small class="text-muted">({{ req[3] }})</small></td>
+                        <td>{{ req[4].strftime('%d %b %Y') }} - {{ req[5].strftime('%d %b %Y') }}</td>
+                        <td class="price text-green">₹{{ req[6] }}</td>
+                        <td>
+                            <span class="status-badge status-{{ req[7]|lower }}">
+                                {{ req[7] }}
+                            </span>
+                        </td>
+<td>
+                            {% if req[7] == 'Pending' %}
+                            <a href="/approve-booking/{{ req[0] }}" class="btn-action btn-approve">✓ Approve</a>
+                            <a href="/reject-booking/{{ req[0] }}" class="btn-action btn-reject">✗ Reject</a>
+                            {% elif req[7] == 'Returned' %}
+                            <form action="/confirm-return/{{ req[0] }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn-action btn-approve">📦 Confirm Received</button>
+                            </form>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="empty-row">No requests on your equipment yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- MY EQUIPMENT LISTINGS -->
+        <div class="section-header">
+            <h3 class="section-title">🚜 My Equipment Listings</h3>
+            <a href="/add-equipment" class="btn btn-small btn-green">➕ Add New</a>
+        </div>
+        <div class="my-equipment-grid">
+            {% if my_equipment %}
+                {% for eq in my_equipment %}
+                <div class="my-equip-card">
+                    <div class="card-top">
+                        <span class="badge">{{ eq[2] }}</span>
+                        {% if eq[5] %}
+                        <span class="availability green">● Active</span>
+                        {% else %}
+                        <span class="availability red">● Unavailable</span>
+                        {% endif %}
+                    </div>
+                    <h4 class="equipment-title">{{ eq[1] }}</h4>
+                    <p class="price">₹{{ eq[3] }} <small>/ hr</small>
+                        {% if eq[4] %}<span class="daily-price"> · ₹{{ eq[4] }} <small>/ day</small></span>{% endif %}
+                    </p>
+                    <form action="/delete-equipment/{{ eq[0] }}" method="POST" onsubmit="return confirmDelete('{{ eq[1] }}')">
+                        <button type="submit" class="btn btn-small btn-delete">🗑️ Remove Listing</button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-data-alert">
+                    🚫 You haven't listed any equipment yet.
+                    <a href="/add-equipment" class="btn btn-green btn-small inline-btn">➕ List Your First Equipment</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- USER BOOKINGS TABLE -->
+        <div class="section-header">
+            <h3 class="section-title">📋 My Booking Requests</h3>
+            <span class="section-count">{{ bookings|length }} requests</span>
+        </div>
+        <div class="table-container">
+            <table class="data-table">
+<thead>
+                    <tr>
+                        <th>Equipment</th>
+                        <th>Owner Contact</th>
+                        <th>Dates</th>
+                        <th>Estimated Cost</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td class="font-bold">{{ booking[1] }}</td>
+                        <td>{{ booking[2] }} <small class="text-muted">({{ booking[3] }})</small></td>
+                        <td>{{ booking[4].strftime('%d %b %Y') }} - {{ booking[5].strftime('%d %b %Y') }}</td>
+                        <td class="price text-green">₹{{ booking[6] }}</td>
+                        <td>
+                            <span class="status-badge status-{{ booking[7]|lower }}">
+                                {{ booking[7] }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if booking[7] == 'Approved' %}
+                            <form action="/return-equipment/{{ booking[0] }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn-action btn-return">↩️ Return Equipment</button>
+                            </form>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="empty-row">You haven't made any booking requests yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- CUSTOM JAVASCRIPT MODAL -->
+    <div id="bookingModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h4 id="modalEquipmentTitle">Book Machinery</h4>
+                <button type="button" class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <form action="/create-booking" method="POST">
+                <input type="hidden" name="equipment_id" id="modalEquipmentId">
+                <div class="modal-body">
+                    <div class="rate-info-box">
+                        <span class="rate-label">Hourly Rate</span>
+                        <strong class="text-green rate-value">₹<span id="modalRateDisplay">0</span> / hr</strong>
+                    </div>
+                    <div class="form-group">
+                        <label>Start Date & Time</label>
+                        <input type="datetime-local" name="start_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Date & Time</label>
+                        <input type="datetime-local" name="end_date" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelModal">Cancel</button>
+                    <button type="submit" class="btn btn-green">Confirm Booking Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Vanilla JavaScript -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
+
